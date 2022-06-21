@@ -1,6 +1,8 @@
 package com.example.demo.src.post;
 
 
+import com.example.demo.src.post.model.GetPostImgRes;
+import com.example.demo.src.post.model.GetPostsRes;
 import com.example.demo.src.user.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,6 +21,60 @@ public class PostDao {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
+    public List<GetPostsRes> selectPosts(int userIdx) {
+        String selectPostsQuery = "select p.postIdx as postIdx,\n" +
+                "u.userIdx as userIdx,\n" +
+                "u.nickName as nickName,\n" +
+                "u.profileImgUrl as profileImgUrl,\n" +
+                "p.content as content,\n" +
+                "if(postLikeCount is null, 0., postLikeCount) as postLikeCount,\n" +
+                "if(commentCount is null, 0., commentCount) as commentCount,\n" +
+                "case when timestampdiff(second, p.updatedAt, current_timestamp) < 60\n" +
+                "then concat(timestampdiff(second, p.updatedAt, current_timestamp), '초 전')\n" +
+                "when timestampdiff(minute, p.updatedAt, current_timestamp) < 60\n" +
+                "then concat(timestampdiff(minute, p.updatedAt, current_timestamp), '분 전')\n" +
+                "when timestampdiff(hour, p.updatedAt, current_timestamp) < 24\n" +
+                "then concat(timestampdiff(hour, p.updatedAt, current_timestamp), '시간 전')\n" +
+                "when timestampdiff(day, p.updatedAt, current_timestamp) < 365\n" +
+                "then concat(timestampdiff(day, p.updatedAt, current_timestamp), '일 전')\n" +
+                "else timestampdiff(year, p.updatedAt, current_timestamp)\n" +
+                "end as updatedAt,\n" +
+                "if(pl.status = 'ACTIVE', 'Y', 'N') as likeOrNot\n" +
+                "from post as p\n" +
+                "join user as u on u.userIdx = p.userIdx\n" +
+                "left join (select postIdx, userIdx, count(postLikeidx) as postLikeCount from postlike where status='ACTIVE') as pol on pol.postIdx = p.postIdx\n" +
+                "left join (select postIdx, count(commentIdx) as commentCount from comment where status='ACTIVE') as cc on cc.postIdx = p.postIdx\n" +
+                "left join follow as f on f.followerIdx = p.userIdx and f.status = 'ACTIVE'\n" +
+                "left join postlike as pl on pl.userIdx = f.followeeIdx and pl.postIdx = p.postIdx\n" +
+                "where f.followerIdx = ? and p.status = 'ACTIVE'\n" +
+                "group by p.postIdx";
+
+        String selectPostsImgsQuery = "select pi.postImgUrlIdx, pi.imgUrl\n" +
+                "from postimgurl as pi\n" +
+                "join post as p on p.postIdx = pi.postIdx\n" +
+                "where pi.status = 'ACTIVE' and p.postIdx = ?";
+
+        int selectPostsParam = userIdx;
+
+
+        return this.jdbcTemplate.query(selectPostsQuery,
+                (rs, rowNum) -> new GetPostsRes(
+                        rs.getInt("postIdx"),
+                        rs.getInt("userIdx"),
+                        rs.getString("nickName"),
+                        rs.getString("profileImgUrl"),
+                        rs.getString("content"),
+                        rs.getInt("postLikeCount"),
+                        rs.getInt("commentCount"),
+                        rs.getString("updatedAt"),
+                        rs.getString("likeOrNot"),
+                        this.jdbcTemplate.query(selectPostsImgsQuery,
+                                (rk, rowKNum) -> new GetPostImgRes(
+                                        rk.getInt("postImgUrlIdx"),
+                                        rk.getString("imgUrl")),
+                                rs.getInt("postIdx"))
+                ),selectPostsParam);
+    }
     public List<GetUserRes> getUsers(){
         String getUsersQuery = "select userIdx,name,nickName,email from user";
         return this.jdbcTemplate.query(getUsersQuery,
@@ -98,14 +154,6 @@ public class PostDao {
                 ),selectUserPostsByIdxParam);
     }
 
-    public int createUser(PostUserReq postUserReq){
-        String createUserQuery = "insert into user (name, nickName, phone, email, password) VALUES (?,?,?,?,?)";
-        Object[] createUserParams = new Object[]{postUserReq.getName(), postUserReq.getNickName(),postUserReq.getPhone(), postUserReq.getEmail(), postUserReq.getPassword()};
-        this.jdbcTemplate.update(createUserQuery, createUserParams);
-
-        String lastInserIdQuery = "select last_insert_id()";
-        return this.jdbcTemplate.queryForObject(lastInserIdQuery,int.class);
-    }
 
     public int checkEmail(String email){
         String checkEmailQuery = "select exists(select email from user where email = ?)";
@@ -114,13 +162,6 @@ public class PostDao {
                 int.class,
                 checkEmailParams);
 
-    }
-
-    public int modifyUserName(PatchUserReq patchUserReq){
-        String modifyUserNameQuery = "update User set nickName = ? where userIdx = ? ";
-        Object[] modifyUserNameParams = new Object[]{patchUserReq.getNickName(), patchUserReq.getUserIdx()};
-
-        return this.jdbcTemplate.update(modifyUserNameQuery,modifyUserNameParams);
     }
 
 
