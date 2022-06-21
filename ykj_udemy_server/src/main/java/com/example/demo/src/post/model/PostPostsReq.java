@@ -10,8 +10,8 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
-public class GetUserFeedsRes {
-    private boolean _isMyFeed;
-    private GetUserInfoRes getUserInfoResList;
-    private List<GetUserPostsRes> getUserPostsResList;
+public class PostPostsReq {
+    private int userIdx;
+    private String content;
+    private List<PostImgUrlReq> postImgUrls;
 }
