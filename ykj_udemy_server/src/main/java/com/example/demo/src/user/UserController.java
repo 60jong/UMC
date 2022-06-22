@@ -102,25 +102,27 @@ public class UserController {
      */
     @ResponseBody
     @PatchMapping("/{userIdx}") // (PATCH) 127.0.0.1:9000/users/:userIdx
-    public BaseResponse<String> modifyUserName(@PathVariable("userIdx") int userIdx, @RequestBody User user){
+    public BaseResponse<String> modifyUserName(@PathVariable("userIdx") int userIdx, @RequestBody User user) throws BaseException {
+        if(userProvider.checkUser(userIdx) == 0)
+            throw new BaseException(USERS_EMPTY_USER_ID);
         try {
-            /* TODO: jwt는 다음주차에서 배울 내용입니다!
-            jwt에서 idx 추출.
-            int userIdxByJwt = jwtService.getUserIdx();
-            userIdx와 접근한 유저가 같은지 확인
-            if(userIdx != userIdxByJwt){
-                return new BaseResponse<>(INVALID_USER_JWT);
-            }
-            */
 
             PatchUserReq patchUserReq = new PatchUserReq(userIdx,user.getNickName());
             userService.modifyUserName(patchUserReq);
 
-            String result = "";
+            String result = "유저 닉네임 변경에 성공했습니다.";
         return new BaseResponse<>(result);
         } catch (BaseException exception) {
             return new BaseResponse<>((exception.getStatus()));
         }
+    }
+    @ResponseBody
+    @PatchMapping("/{userIdx}/status")
+    public BaseResponse<DeleteUserRes> modifyUserStatus(@PathVariable("userIdx") int userIdx) throws BaseException {
+        if(userProvider.checkUser(userIdx) == 0)
+            throw new BaseException(USERS_EMPTY_USER_ID);
+        DeleteUserRes deleteUserRes = userService.modifyUserStatus(userIdx);
+        return new BaseResponse<>(deleteUserRes);
     }
 
 }

@@ -3,9 +3,7 @@ package com.example.demo.src.user;
 
 import com.example.demo.config.BaseException;
 
-import com.example.demo.src.user.model.PatchUserReq;
-import com.example.demo.src.user.model.PostUserReq;
-import com.example.demo.src.user.model.PostUserRes;
+import com.example.demo.src.user.model.*;
 import com.example.demo.utils.JwtService;
 import com.example.demo.utils.SHA256;
 import org.slf4j.Logger;
@@ -54,19 +52,27 @@ public class UserService {
             String jwt = jwtService.createJwt(userIdx);
             return new PostUserRes(jwt,userIdx);
         } catch (Exception exception) {
+            exception.printStackTrace();
             throw new BaseException(DATABASE_ERROR);
         }
     }
 
     public void modifyUserName(PatchUserReq patchUserReq) throws BaseException {
         try{
-            int result = userDao.modifyUserName(patchUserReq);
+            int result = userDao.updateUserName(patchUserReq);
             if(result == 0){
                 throw new BaseException(MODIFY_FAIL_USERNAME);
             }
         } catch(Exception exception){
+            exception.printStackTrace();
             throw new BaseException(DATABASE_ERROR);
         }
     }
 
+    public DeleteUserRes modifyUserStatus(int userIdx) {
+        GetUserRes getUserRes = userDao.selectUserByIdx(userIdx);
+        DeleteUserRes deleteUserRes = new DeleteUserRes(getUserRes.getUserIdx(),getUserRes.getName(),getUserRes.getNickName(),getUserRes.getEmail());
+        userDao.updateUserStatus(userIdx);
+        return deleteUserRes;
+    }
 }

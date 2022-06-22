@@ -116,11 +116,11 @@ public class UserDao {
 
     }
 
-    public int modifyUserName(PatchUserReq patchUserReq){
-        String modifyUserNameQuery = "update User set nickName = ? where userIdx = ? ";
-        Object[] modifyUserNameParams = new Object[]{patchUserReq.getNickName(), patchUserReq.getUserIdx()};
+    public int updateUserName(PatchUserReq patchUserReq){
+        String updateUserNameQuery = "update user set nickName = ? where userIdx = ? ";
+        Object[] updateUserNameParams = new Object[]{patchUserReq.getNickName(), patchUserReq.getUserIdx()};
 
-        return this.jdbcTemplate.update(modifyUserNameQuery,modifyUserNameParams);
+        return this.jdbcTemplate.update(updateUserNameQuery,updateUserNameParams);
     }
 
 
@@ -133,5 +133,10 @@ public class UserDao {
     }
 
 
+    public int updateUserStatus(int userIdx) {
+        String updateUserStatusQuery = "update user set status = 'INACTIVE' where userIdx=?";
+        int updateUserStatusParam = userIdx;
 
+        return this.jdbcTemplate.update(updateUserStatusQuery,updateUserStatusParam);
+    }
 }

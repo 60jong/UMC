@@ -8,9 +8,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class DeleteUserRes {
+    private int userIdx;
     private String name;
     private String nickName;
-    private String phone;
     private String email;
-    private String password;
 }
