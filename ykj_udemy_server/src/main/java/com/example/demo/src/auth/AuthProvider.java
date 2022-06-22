@@ -1,7 +1,8 @@
-package com.example.demo.src.user;
+package com.example.demo.src.auth;
 
 
 import com.example.demo.config.BaseException;
+import com.example.demo.src.user.UserDao;
 import com.example.demo.src.user.model.GetUserFeedsRes;
 import com.example.demo.src.user.model.GetUserInfoRes;
 import com.example.demo.src.user.model.GetUserPostsRes;
@@ -18,7 +19,7 @@ import static com.example.demo.config.BaseResponseStatus.DATABASE_ERROR;
 
 //Provider : Read의 비즈니스 로직 처리
 @Service
-public class UserProvider { 
+public class AuthProvider {
 
     private final UserDao userDao;
     private final JwtService jwtService;
@@ -27,7 +28,7 @@ public class UserProvider {
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserProvider(UserDao userDao, JwtService jwtService) {
+    public AuthProvider(UserDao userDao, JwtService jwtService) {
         this.userDao = userDao;
         this.jwtService = jwtService;
     }

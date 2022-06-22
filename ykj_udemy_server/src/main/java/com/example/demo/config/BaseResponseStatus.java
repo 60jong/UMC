@@ -35,6 +35,9 @@ public enum BaseResponseStatus {
     PATCH_POST_INVALID_CONTENTS(false,2020,"게시글의 글자 수를 확인해주세요."),
     POSTS_EMPTY_POST_ID(false, 2021, "게시물 아이디 값을 확인해주세요."),
 
+    POST_USERS_EMPTY_PASSWORD(false,2022 ,"비밀번호를 입력해주세요." ),
+    POST_USERS_INVALID_PASSWORD(false,2023 ,"비밀번호 형식을 확인해주세요." ),
+
 
 
     /**

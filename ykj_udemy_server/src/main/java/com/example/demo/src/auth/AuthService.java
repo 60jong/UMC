@@ -1,8 +1,11 @@
-package com.example.demo.src.user;
+package com.example.demo.src.auth;
 
 
 import com.example.demo.config.BaseException;
-
+import com.example.demo.config.BaseResponseStatus;
+import com.example.demo.src.auth.model.PostLoginReq;
+import com.example.demo.src.auth.model.PostLoginRes;
+import com.example.demo.src.auth.model.User;
 import com.example.demo.src.user.model.*;
 import com.example.demo.utils.JwtService;
 import com.example.demo.utils.SHA256;
@@ -15,64 +18,37 @@ import static com.example.demo.config.BaseResponseStatus.*;
 
 // Service Create, Update, Delete 의 로직 처리
 @Service
-public class UserService {
+public class AuthService {
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final UserDao userDao;
-    private final UserProvider userProvider;
+    private final AuthDao authDao;
+    private final AuthProvider authProvider;
     private final JwtService jwtService;
 
 
     @Autowired
-    public UserService(UserDao userDao, UserProvider userProvider, JwtService jwtService) {
-        this.userDao = userDao;
-        this.userProvider = userProvider;
+    public AuthService(AuthDao authDao, AuthProvider authProvider, JwtService jwtService) {
+        this.authDao = authDao;
+        this.authProvider = authProvider;
         this.jwtService = jwtService;
 
     }
 
-
-    public PostUserRes createUser(PostUserReq postUserReq) throws BaseException {
-        // 이메일 중복 확인
-        if(userProvider.checkEmail(postUserReq.getEmail()) ==1){
-            throw new BaseException(POST_USERS_EXISTS_EMAIL);
-        }
-
-        String pwd;
-        try{
-            //암호화
-            pwd = new SHA256().encrypt(postUserReq.getPassword());  postUserReq.setPassword(pwd);
-        } catch (Exception ignored) {
+    public PostLoginRes logIn(PostLoginReq postLoginReq) throws BaseException {
+        User user = authDao.getUser(postLoginReq);
+        String encryptPassword;
+        try {
+            encryptPassword = new SHA256().encrypt(postLoginReq.getPassword());
+        } catch (Exception exception) {
             throw new BaseException(PASSWORD_ENCRYPTION_ERROR);
         }
-        try{
-            int userIdx = userDao.createUser(postUserReq);
-            //jwt 발급.
-            // TODO: jwt는 다음주차에서 배울 내용입니다!
+
+        if (encryptPassword.equals(user.getPassword())) {
+            int userIdx = user.getUserIdx();
             String jwt = jwtService.createJwt(userIdx);
-            return new PostUserRes(jwt,userIdx);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-            throw new BaseException(DATABASE_ERROR);
-        }
-    }
 
-    public void modifyUserName(PatchUserReq patchUserReq) throws BaseException {
-        try{
-            int result = userDao.updateUserName(patchUserReq);
-            if(result == 0){
-                throw new BaseException(MODIFY_FAIL_USERNAME);
-            }
-        } catch(Exception exception){
-            exception.printStackTrace();
-            throw new BaseException(DATABASE_ERROR);
-        }
-    }
-
-    public DeleteUserRes modifyUserStatus(int userIdx) {
-        GetUserRes getUserRes = userDao.selectUserByIdx(userIdx);
-        DeleteUserRes deleteUserRes = new DeleteUserRes(getUserRes.getUserIdx(),getUserRes.getName(),getUserRes.getNickName(),getUserRes.getEmail());
-        userDao.updateUserStatus(userIdx);
-        return deleteUserRes;
+            return new PostLoginRes(userIdx, jwt);
+        } else
+            throw new BaseException(FAILED_TO_LOGIN);
     }
 }
