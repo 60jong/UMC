@@ -3,6 +3,8 @@ package com.example.demo.src.post;
 
 import com.example.demo.src.post.model.GetPostImgRes;
 import com.example.demo.src.post.model.GetPostsRes;
+import com.example.demo.src.post.model.PostImgUrlReq;
+import com.example.demo.src.post.model.PostPostsReq;
 import com.example.demo.src.user.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -172,7 +174,52 @@ public class PostDao {
                 int.class,
                 checkUserParam);
     }
+    public int checkPost(int postIdx) {
+        String checkPostExistQuery = "select exists(select postIdx from post where postIdx = ?)";
+        int checkPostExistParams = postIdx;
+        return this.jdbcTemplate.queryForObject(checkPostExistQuery,
+                int.class,
+                checkPostExistParams);
+    }
+
+    public int updatePost(int postIdx, String content) {
+
+        String updatePostQuery = "update post set content = ? where postIdx = ?";
+        Object[] updatePostParams = new Object[]{content, postIdx};
+
+        return this.jdbcTemplate.update(updatePostQuery, updatePostParams);
+    }
+
+    public int deletePost(int postIdx) {
+        String deletePostQuery = "delete from post where postIdx = ?";
+        Object[] deletePostParams = new Object[]{postIdx};
+
+        return this.jdbcTemplate.update(deletePostQuery, deletePostParams);
+    }
+
+    public int insertPosts(PostPostsReq postPostsReq) {
+        String insertPostsQuery = "insert into post(userIdx, content) values (?,?)";
+        Object[] insertPostsParams = new Object[] {postPostsReq.getUserIdx(),postPostsReq.getContent()};
+
+        this.jdbcTemplate.update(insertPostsQuery,insertPostsParams);
+
+        String lastInsertIdxQuery= "select last_insert_id()";
+
+        return this.jdbcTemplate.queryForObject(lastInsertIdxQuery, int.class);
+    }
+
+    public void insertPostImgUrls(int postIdx, PostImgUrlReq postImgUrlReq) {
+        String insertPostImgUrlsQuery = "insert into postimgurl(postIdx,imgUrl) values(?,?)";
+        Object[] insertPostsImgUrlParams = new Object[] {postIdx,postImgUrlReq.getImgUrl()};
+
+        this.jdbcTemplate.update(insertPostImgUrlsQuery, insertPostsImgUrlParams);
+    }
 
 
+    public int updatePostStatus(int postIdx) {
+        String updatePostStatusQuery = "update post set status = 'INACTIVE' where postIdx = ?";
+        Object[] updatePostStatusParam = new Object[]{postIdx};
 
+        return this.jdbcTemplate.update(updatePostStatusQuery, updatePostStatusParam);
+    }
 }

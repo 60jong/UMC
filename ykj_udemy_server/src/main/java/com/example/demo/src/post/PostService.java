@@ -2,6 +2,9 @@ package com.example.demo.src.post;
 
 
 import com.example.demo.config.BaseException;
+import com.example.demo.src.post.model.PatchPostsReq;
+import com.example.demo.src.post.model.PostPostsReq;
+import com.example.demo.src.post.model.PostPostsRes;
 import com.example.demo.src.user.model.PatchUserReq;
 import com.example.demo.src.user.model.PostUserReq;
 import com.example.demo.src.user.model.PostUserRes;
@@ -32,5 +35,54 @@ public class PostService {
 
     }
 
+    public PostPostsRes createPosts(PostPostsReq postPostsReq) {
 
+        int postIdx = postDao.insertPosts(postPostsReq);
+        for (int i = 0; i < postPostsReq.getPostImgUrls().size(); i++) {
+            postDao.insertPostImgUrls(postIdx,postPostsReq.getPostImgUrls().get(i));
+        }
+        return new PostPostsRes(postIdx);
+    }
+
+    public void modifyPost(int userIdx, int postIdx, PatchPostsReq patchPostsReq) throws BaseException {
+        if(postDao.checkUser(userIdx) == 0)
+            throw new BaseException(USERS_EMPTY_USER_ID);
+        if(postDao.checkPost(postIdx)==0)
+            throw new BaseException(POSTS_EMPTY_POST_ID);
+
+        try {
+            int result = postDao.updatePost(postIdx, patchPostsReq.getContent());
+            if (result == 0)
+                throw new BaseException(MODIFY_FAIL_POST);
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public void deletePost(int postIdx) throws BaseException {
+        if(postDao.checkPost(postIdx)==0)
+            throw new BaseException(POSTS_EMPTY_POST_ID);
+
+        try {
+            int result = postDao.deletePost(postIdx);
+            if (result == 0)
+                throw new BaseException(DELETE_FAIL_POST);
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public void modifyPostStatus(int postIdx) throws BaseException {
+        if(postDao.checkPost(postIdx)==0)
+            throw new BaseException(POSTS_EMPTY_POST_ID);
+        try {
+            int result = postDao.updatePostStatus(postIdx);
+            if (result == 0)
+                throw new BaseException(DELETE_FAIL_POST);
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+
+
+    }
 }
